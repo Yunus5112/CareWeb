@@ -1,0 +1,78 @@
+╔════════════════════════════════════════════════════════════════╗
+║      🚀 GITHUB PAGES'E DEPLOY ETME TALİMATLARI               ║
+╚════════════════════════════════════════════════════════════════╝
+
+📋 ADIM 1: GitHub'da Repo Oluştur
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. https://github.com/new adresine git
+2. Repository name: CareWeb (veya istediğiniz ad)
+3. Public seç (GitHub Pages için gerekli)
+4. "Create repository" butonuna tıkla
+
+🔗 ADIM 2: Local Projeyi GitHub'a Push Et
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Terminal'de şu komutları çalıştır:
+
+cd /Users/mac/Desktop/CareWeb/CareWeb
+git init
+git add .
+git commit -m "feat: Initial commit with Phase 1 refactoring"
+git branch -M main
+git remote add origin https://github.com/[KULLANICI_ADIN]/CareWeb.git
+git push -u origin main
+
+⚙️ ADIM 3: GitHub Pages Ayarları
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. GitHub'da repo sayfana git
+2. Settings → Pages
+3. Source: "GitHub Actions" seç
+4. Save
+
+✅ ADIM 4: Deploy Kontrol Et
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Actions sekmesine git
+2. "Deploy to GitHub Pages" workflow'unu gör
+3. Yeşil ✓ olunca tamamdır!
+4. Siteniz: https://[KULLANICI_ADIN].github.io/CareWeb/
+
+📊 LİMİTLER VE ÖZELLİKLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Repo boyutu: Max 1 GB
+✅ Site boyutu: Max 1 GB
+✅ Bandwidth: 100 GB/ay
+✅ Build: 10/saat
+✅ Ücretsiz: Sınırsız public repo
+✅ Site sayısı: Sınırsız
+
+🔄 GÜNCELLEME YAPMAK İÇİN
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Değişiklikleri yap
+git add .
+git commit -m "feat: yeni özellik"
+git push origin main
+
+# GitHub Actions otomatik deploy eder! 🎉
+
+⚠️ ÖNEMLİ NOTLAR
+━━━━━━━━━━━━━━━━
+• vite.config.ts içinde base URL doğru ayarlandı: '/CareWeb/'
+• Repo adınız farklıysa vite.config.ts'yi güncelleyin
+• Custom domain kullanıyorsanız base: '/' yapın
+• .github/workflows/deploy.yml otomatik deploy yapar
+
+🐛 SORUN GİDERME
+━━━━━━━━━━━━━━━━
+❌ 404 Hatası → vite.config.ts base URL kontrol et
+❌ Assets yok → base URL yanlış
+❌ Build hatası → npm run build ile local test et
+❌ Actions çalışmıyor → Settings → Actions → Allow all
+
+📚 DAHA FAZLA BİLGİ
+━━━━━━━━━━━━━━━━━━━
+DEPLOYMENT.md dosyasını oku
+README.md dosyasını güncelle (USERNAME kısmını değiştir)
+
+═══════════════════════════════════════════════════════════════
+Başarılar! 🎉 Herhangi bir sorun olursa DEPLOYMENT.md'ye bak.
+═══════════════════════════════════════════════════════════════
+

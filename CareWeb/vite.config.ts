@@ -5,4 +5,23 @@ import { defineConfig } from "vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  
+  // GitHub Pages için base URL
+  // Repo adınız "CareWeb" ise: '/CareWeb/'
+  // Custom domain kullanıyorsanız: '/'
+  base: process.env.NODE_ENV === 'production' ? '/CareWeb/' : '/',
+  
+  // Build optimizasyonları
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+        }
+      }
+    }
+  }
 });
