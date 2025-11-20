@@ -6,7 +6,25 @@ export const useKeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete selected elements
+      // Input, textarea veya contenteditable içindeyken klavye kısayollarını devre dışı bırak
+      const target = e.target as HTMLElement;
+      const isInputField = 
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable ||
+        target.closest('input') !== null ||
+        target.closest('textarea') !== null;
+      
+      // Input alanındayken sadece Escape'i çalıştır (blur için)
+      if (isInputField) {
+        if (e.key === 'Escape') {
+          (target as HTMLInputElement).blur();
+          deselectAll();
+        }
+        return; // Diğer kısayolları engelle
+      }
+
+      // Delete selected elements (sadece input dışında)
       if ((e.key === 'Delete' || e.key === 'Backspace') && state.selection.selectedElementIds.length > 0) {
         e.preventDefault();
         state.selection.selectedElementIds.forEach(id => {
