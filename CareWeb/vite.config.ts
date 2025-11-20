@@ -7,9 +7,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   
   // GitHub Pages için base URL
-  // Repo adınız "CareWeb" ise: '/CareWeb/'
-  // Custom domain kullanıyorsanız: '/'
-  base: process.env.NODE_ENV === 'production' ? '/CareWeb/' : '/',
+  // ÖNCE TEST: base olmadan dene, sonra repo adına göre ayarla
+  base: '/',
   
   // Build optimizasyonları
   build: {
