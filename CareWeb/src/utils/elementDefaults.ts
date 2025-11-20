@@ -1,4 +1,5 @@
-import { ElementType, ElementTemplate, Position } from '../types';
+import type { ElementTemplate, Position } from '../types';
+import { ElementType } from '../types';
 
 // Default positions for each element type
 export const DEFAULT_POSITIONS: Record<ElementType, Position> = {

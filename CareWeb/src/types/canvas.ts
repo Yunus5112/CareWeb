@@ -15,7 +15,7 @@ export interface CanvasConfig {
 }
 
 // Viewport/Responsive Modes
-export enum ViewportMode {
+export const enum ViewportMode {
   DESKTOP = 'desktop',
   TABLET = 'tablet',
   MOBILE = 'mobile'

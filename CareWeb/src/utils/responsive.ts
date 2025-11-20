@@ -1,4 +1,5 @@
-import { Position, ResponsiveConfig, ViewportMode } from '../types';
+import type { Position, ResponsiveConfig } from '../types';
+import { ViewportMode } from '../types';
 
 /**
  * Get effective position based on viewport mode and responsive config

@@ -1,5 +1,5 @@
 // Element Types
-export enum ElementType {
+export const enum ElementType {
   HEADER = 'header',
   FOOTER = 'footer',
   CARD = 'card',

@@ -3,7 +3,7 @@
  * Structured error handling for better debugging and user feedback
  */
 
-export enum ErrorType {
+export const enum ErrorType {
   // Validation errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   INVALID_JSON = 'INVALID_JSON',

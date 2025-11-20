@@ -1,5 +1,5 @@
-import { Element } from './elements';
-import { CanvasConfig } from './canvas';
+import type { Element } from './elements';
+import type { CanvasConfig } from './canvas';
 
 // Project Metadata
 export interface ProjectMetadata {

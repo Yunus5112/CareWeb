@@ -6,7 +6,7 @@ export interface SelectionState {
 }
 
 // Transform Handles
-export enum ResizeHandle {
+export const enum ResizeHandle {
   TOP_LEFT = 'tl',
   TOP_CENTER = 'tc',
   TOP_RIGHT = 'tr',

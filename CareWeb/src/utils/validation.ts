@@ -1,4 +1,5 @@
-import { Project, Element, ElementType } from '../types';
+import type { Project } from '../types';
+import { ElementType } from '../types';
 
 /**
  * Validate Project JSON structure

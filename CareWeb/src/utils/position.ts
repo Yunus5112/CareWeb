@@ -1,4 +1,4 @@
-import { BoundingBox, CollisionResult } from '../types';
+import type { BoundingBox, CollisionResult } from '../types';
 
 /**
  * Calculate absolute position from mouse coordinates
