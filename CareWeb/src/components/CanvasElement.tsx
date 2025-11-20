@@ -13,7 +13,7 @@ interface CanvasElementProps {
 }
 
 const CanvasElement = ({ element }: CanvasElementProps) => {
-  const { state, selectElement } = useBuilder();
+  const { state, selectElement, updateElement } = useBuilder();
   const isSelected = state.selection.selectedElementIds.includes(element.id);
   const elementRef = useRef<HTMLDivElement>(null);
 
@@ -22,7 +22,7 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
     selectElement(element.id, e.metaKey || e.ctrlKey);
   };
 
-  // Simple drag implementation
+  // Drag implementation with state update
   useEffect(() => {
     if (!isSelected || !elementRef.current) return;
 
@@ -33,28 +33,70 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
     let initialY = typeof element.position.y === 'number' ? element.position.y : 0;
 
     const handleMouseDown = (e: MouseEvent) => {
+      // Resize handle'lara tıklanırsa drag'i başlatma
       if ((e.target as HTMLElement).classList.contains('resize-handle')) return;
+      
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
       initialX = typeof element.position.x === 'number' ? element.position.x : 0;
       initialY = typeof element.position.y === 'number' ? element.position.y : 0;
       e.preventDefault();
+      e.stopPropagation();
+      
+      // Cursor değiştir
+      document.body.style.cursor = 'grabbing';
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
+      
       const deltaX = (e.clientX - startX) / state.canvas.zoom;
       const deltaY = (e.clientY - startY) / state.canvas.zoom;
       
+      let newX = initialX + deltaX;
+      let newY = initialY + deltaY;
+      
+      // Grid snap if enabled
+      if (state.canvas.config.grid.snap) {
+        const gridSize = state.canvas.config.grid.size;
+        newX = Math.round(newX / gridSize) * gridSize;
+        newY = Math.round(newY / gridSize) * gridSize;
+      }
+      
+      // Geçici olarak style ile pozisyon güncelle (performans için)
       if (elementRef.current) {
-        elementRef.current.style.left = `${initialX + deltaX}px`;
-        elementRef.current.style.top = `${initialY + deltaY}px`;
+        elementRef.current.style.left = `${newX}px`;
+        elementRef.current.style.top = `${newY}px`;
       }
     };
 
     const handleMouseUp = () => {
+      if (!isDragging) return;
+      
       isDragging = false;
+      document.body.style.cursor = '';
+      
+      // Son pozisyonu state'e kaydet
+      if (elementRef.current) {
+        const finalX = parseFloat(elementRef.current.style.left);
+        const finalY = parseFloat(elementRef.current.style.top);
+        
+        // Sınırlar içinde tut
+        const maxX = state.canvas.config.width - (typeof element.position.width === 'number' ? element.position.width : 0);
+        const maxY = state.canvas.config.height - (typeof element.position.height === 'number' ? element.position.height : 0);
+        
+        const constrainedX = Math.max(0, Math.min(finalX, maxX));
+        const constrainedY = Math.max(0, Math.min(finalY, maxY));
+        
+        updateElement(element.id, {
+          position: {
+            ...element.position,
+            x: constrainedX,
+            y: constrainedY
+          }
+        });
+      }
     };
 
     const element_div = elementRef.current;
@@ -66,8 +108,9 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
       element_div?.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
     };
-  }, [isSelected, element.position.x, element.position.y, state.canvas.zoom]);
+  }, [isSelected, element.id, element.position, state.canvas.zoom, state.canvas.config, updateElement]);
 
   const renderElement = () => {
     switch (element.type) {

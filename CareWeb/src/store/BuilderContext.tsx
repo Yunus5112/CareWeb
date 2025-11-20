@@ -308,9 +308,20 @@ export const BuilderProvider: React.FC<{ children: ReactNode }> = ({ children })
     const template = ELEMENT_TEMPLATES.find(t => t.type === type);
     if (!template) return;
 
-    const newPosition = position
-      ? { ...template.defaultPosition, x: position.x, y: position.y }
-      : template.defaultPosition;
+    // Header ve Footer her zaman sabit pozisyonlardan başlar
+    let newPosition;
+    if (type === ElementType.HEADER) {
+      // Header her zaman x:0, y:0 dan başlar
+      newPosition = { ...template.defaultPosition, x: 0, y: 0 };
+    } else if (type === ElementType.FOOTER) {
+      // Footer her zaman x:0, altta başlar
+      newPosition = { ...template.defaultPosition, x: 0 };
+    } else {
+      // Diğer elementler sürüklendiği pozisyondan başlar
+      newPosition = position
+        ? { ...template.defaultPosition, x: position.x, y: position.y }
+        : template.defaultPosition;
+    }
 
     const newElement: any = {
       id: generateElementId(type),
