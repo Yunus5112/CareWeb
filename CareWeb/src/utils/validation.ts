@@ -1,5 +1,4 @@
 import type { Project } from '../types';
-import { ElementType } from '../types';
 
 /**
  * Validate Project JSON structure
@@ -36,7 +35,8 @@ export const validateProjectJSON = (data: any): { valid: boolean; errors: string
       data.elements.forEach((element: any, index: number) => {
         if (!element.id) errors.push(`Element ${index}: missing id`);
         if (!element.type) errors.push(`Element ${index}: missing type`);
-        if (!Object.values(ElementType).includes(element.type)) {
+        const validTypes = ['header', 'footer', 'card', 'text-content', 'slider', 'container', 'grid-container'];
+        if (!validTypes.includes(element.type)) {
           errors.push(`Element ${index}: invalid type "${element.type}"`);
         }
         if (!element.position) errors.push(`Element ${index}: missing position`);

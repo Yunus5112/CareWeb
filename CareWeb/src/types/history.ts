@@ -1,7 +1,7 @@
 import type { Element } from './elements';
 
 // History Action Types
-export const enum HistoryActionType {
+export enum HistoryActionType {
   ADD_ELEMENT = 'ADD_ELEMENT',
   REMOVE_ELEMENT = 'REMOVE_ELEMENT',
   UPDATE_ELEMENT = 'UPDATE_ELEMENT',

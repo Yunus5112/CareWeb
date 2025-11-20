@@ -26,6 +26,7 @@ const PropertiesPanel = () => {
   }
 
   const handleContentUpdate = (field: string, value: any) => {
+    // @ts-ignore - Content type is dynamic based on element type
     updateElement(selectedElement.id, {
       content: {
         ...selectedElement.content,

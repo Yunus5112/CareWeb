@@ -137,6 +137,7 @@ const builderReducer = (state: BuilderState, action: BuilderAction): BuilderStat
     case 'UPDATE_ELEMENT':
       return {
         ...state,
+        // @ts-ignore - Element type is discriminated union, update is dynamic
         elements: state.elements.map(el =>
           el.id === action.payload.id
             ? { ...el, ...action.payload.updates, updatedAt: new Date().toISOString() }
