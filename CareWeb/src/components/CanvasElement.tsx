@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useBuilder } from '../store/BuilderContext';
 import { Element, ElementType, ResizeHandle } from '../types';
+import { getResponsivePosition } from '../utils';
 import HeaderElement from './elements/HeaderElement';
 import FooterElement from './elements/FooterElement';
 import CardElement from './elements/CardElement';
@@ -18,6 +19,15 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isResizingRef = useRef(false);
   const activeHandleRef = useRef<string | null>(null);
+
+  // Get responsive position based on current viewport
+  const effectivePosition = useMemo(() => {
+    return getResponsivePosition(
+      element.position,
+      element.responsive,
+      state.canvas.viewportMode
+    );
+  }, [element.position, element.responsive, state.canvas.viewportMode]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -308,11 +318,11 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
           : 'hover:ring-2 hover:ring-gray-300 cursor-pointer'
       }`}
       style={{
-        left: element.position.x,
-        top: element.position.y,
-        width: element.position.width,
-        height: element.position.height,
-        zIndex: element.position.zIndex
+        left: effectivePosition.x,
+        top: effectivePosition.y,
+        width: effectivePosition.width,
+        height: effectivePosition.height,
+        zIndex: effectivePosition.zIndex
       }}
     >
       {renderElement()}

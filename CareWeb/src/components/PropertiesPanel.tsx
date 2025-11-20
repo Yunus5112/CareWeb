@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useBuilder } from '../store/BuilderContext';
-import { ElementType } from '../types';
+import { ElementType, ViewportMode } from '../types';
+import { generateDefaultResponsiveConfig } from '../utils';
 
 const PropertiesPanel = () => {
   const { state, updateElement, removeElement } = useBuilder();
+  const [showResponsive, setShowResponsive] = useState(false);
   
   const selectedElement = state.selection.selectedElementIds.length === 1
     ? state.elements.find(el => el.id === state.selection.selectedElementIds[0])
@@ -42,6 +45,28 @@ const PropertiesPanel = () => {
     if (confirm('Are you sure you want to delete this element?')) {
       removeElement(selectedElement.id);
     }
+  };
+
+  const handleEnableResponsive = () => {
+    if (!selectedElement.responsive) {
+      const defaultResponsive = generateDefaultResponsiveConfig(selectedElement.position);
+      updateElement(selectedElement.id, {
+        responsive: defaultResponsive
+      });
+    }
+    setShowResponsive(true);
+  };
+
+  const handleResponsiveUpdate = (viewport: 'mobile' | 'tablet' | 'desktop', field: string, value: any) => {
+    updateElement(selectedElement.id, {
+      responsive: {
+        ...selectedElement.responsive,
+        [viewport]: {
+          ...(selectedElement.responsive?.[viewport] || {}),
+          [field]: value
+        }
+      }
+    });
   };
 
   return (
@@ -240,6 +265,97 @@ const PropertiesPanel = () => {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Responsive Settings */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-white text-xs font-semibold uppercase">Responsive</h3>
+            {!selectedElement.responsive ? (
+              <button
+                onClick={handleEnableResponsive}
+                className="text-xs text-blue-400 hover:text-blue-300"
+              >
+                + Enable
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowResponsive(!showResponsive)}
+                className="text-xs text-gray-400 hover:text-white"
+              >
+                {showResponsive ? '▼ Hide' : '▶ Show'}
+              </button>
+            )}
+          </div>
+
+          {selectedElement.responsive && showResponsive && (
+            <div className="space-y-4 pl-2 border-l-2 border-gray-700">
+              {/* Current Viewport Indicator */}
+              <div className="text-xs text-gray-400 mb-2">
+                Current: <span className="text-blue-400">{state.canvas.viewportMode}</span>
+              </div>
+
+              {/* Mobile Settings */}
+              <div>
+                <h4 className="text-gray-300 text-xs font-medium mb-2">📱 Mobile</h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-gray-500 text-xs">Width</label>
+                    <input
+                      type="text"
+                      value={selectedElement.responsive.mobile?.width || ''}
+                      onChange={(e) => handleResponsiveUpdate('mobile', 'width', e.target.value)}
+                      placeholder="e.g. 100% or 320"
+                      className="w-full bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-500 text-xs">Height</label>
+                    <input
+                      type="text"
+                      value={selectedElement.responsive.mobile?.height || ''}
+                      onChange={(e) => handleResponsiveUpdate('mobile', 'height', e.target.value)}
+                      placeholder="auto or number"
+                      className="w-full bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tablet Settings */}
+              <div>
+                <h4 className="text-gray-300 text-xs font-medium mb-2">📱 Tablet</h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-gray-500 text-xs">Width</label>
+                    <input
+                      type="text"
+                      value={selectedElement.responsive.tablet?.width || ''}
+                      onChange={(e) => handleResponsiveUpdate('tablet', 'width', e.target.value)}
+                      placeholder="e.g. 100% or 600"
+                      className="w-full bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-500 text-xs">Height</label>
+                    <input
+                      type="text"
+                      value={selectedElement.responsive.tablet?.height || ''}
+                      onChange={(e) => handleResponsiveUpdate('tablet', 'height', e.target.value)}
+                      placeholder="auto or number"
+                      className="w-full bg-gray-700 text-white px-2 py-1 rounded text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Settings */}
+              <div>
+                <h4 className="text-gray-300 text-xs font-medium mb-2">🖥️ Desktop</h4>
+                <p className="text-xs text-gray-500 italic">Uses base position by default</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

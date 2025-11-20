@@ -3,4 +3,5 @@ export * from './elementDefaults';
 export * from './position';
 export * from './idGenerator';
 export * from './validation';
+export * from './responsive';
 

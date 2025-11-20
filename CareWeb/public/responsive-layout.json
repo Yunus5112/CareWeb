@@ -1,0 +1,168 @@
+{
+  "project": {
+    "name": "Responsive Test Layout",
+    "version": "1.0",
+    "created": "2024-11-20T10:00:00Z",
+    "lastModified": "2024-11-20T10:00:00Z"
+  },
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "grid": {
+      "enabled": true,
+      "size": 10,
+      "snap": true
+    }
+  },
+  "elements": [
+    {
+      "id": "elem_header_001",
+      "type": "header",
+      "content": {
+        "text": "Responsive Header",
+        "style": "default",
+        "navigation": [
+          { "label": "Home", "href": "#" },
+          { "label": "About", "href": "#" },
+          { "label": "Contact", "href": "#" }
+        ]
+      },
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": "100%",
+        "height": 80,
+        "zIndex": 100
+      },
+      "responsive": {
+        "mobile": {
+          "height": 60
+        },
+        "tablet": {
+          "height": 70
+        }
+      }
+    },
+    {
+      "id": "elem_card_001",
+      "type": "card",
+      "content": {
+        "title": "Responsive Card 1",
+        "description": "This card adapts to different screen sizes",
+        "image": null,
+        "icon": "📱"
+      },
+      "position": {
+        "x": 50,
+        "y": 100,
+        "width": 350,
+        "height": 250,
+        "zIndex": 1
+      },
+      "responsive": {
+        "mobile": {
+          "x": 10,
+          "width": "calc(100% - 20px)",
+          "height": 200
+        },
+        "tablet": {
+          "x": 30,
+          "width": 300,
+          "height": 230
+        }
+      }
+    },
+    {
+      "id": "elem_card_002",
+      "type": "card",
+      "content": {
+        "title": "Responsive Card 2",
+        "description": "Another responsive card",
+        "image": null,
+        "icon": "💻"
+      },
+      "position": {
+        "x": 450,
+        "y": 100,
+        "width": 350,
+        "height": 250,
+        "zIndex": 2
+      },
+      "responsive": {
+        "mobile": {
+          "x": 10,
+          "y": 320,
+          "width": "calc(100% - 20px)",
+          "height": 200
+        },
+        "tablet": {
+          "x": 350,
+          "width": 300,
+          "height": 230
+        }
+      }
+    },
+    {
+      "id": "elem_text_001",
+      "type": "text-content",
+      "content": {
+        "html": "<p>This is responsive text content that adapts to screen size</p>",
+        "plainText": "This is responsive text content that adapts to screen size",
+        "fontSize": 16,
+        "alignment": "center"
+      },
+      "position": {
+        "x": 50,
+        "y": 380,
+        "width": 750,
+        "height": "auto",
+        "minHeight": 80,
+        "zIndex": 3
+      },
+      "responsive": {
+        "mobile": {
+          "x": 10,
+          "y": 540,
+          "width": "calc(100% - 20px)"
+        },
+        "tablet": {
+          "x": 30,
+          "width": 700
+        }
+      }
+    },
+    {
+      "id": "elem_footer_001",
+      "type": "footer",
+      "content": {
+        "copyright": "2024 Responsive Builder",
+        "links": [
+          { "label": "Privacy", "href": "#" },
+          { "label": "Terms", "href": "#" }
+        ]
+      },
+      "position": {
+        "x": 0,
+        "y": "calc(100% - 60px)",
+        "width": "100%",
+        "height": 60,
+        "zIndex": 100,
+        "fixed": true
+      },
+      "responsive": {
+        "mobile": {
+          "height": 80
+        },
+        "tablet": {
+          "height": 70
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "totalElements": 5,
+    "exportFormat": "json",
+    "exportVersion": "2.0"
+  }
+}
+

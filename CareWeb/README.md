@@ -80,9 +80,22 @@ src/
 - Orantıyı korumak için Shift basılı tutun (yakında)
 
 ### 5️⃣ JSON Export
-- Üst toolbar'daki "Export JSON" butonuna tıklayın
+- Üst toolbar'daki "💾 Export JSON" butonuna tıklayın
 - JSON dosyası otomatik olarak indirilir
 - Bu dosyayı daha sonra import edebilirsiniz
+
+### 6️⃣ JSON Import
+- Üst toolbar'daki "📥 Import JSON" butonuna tıklayın
+- Export ettiğiniz JSON dosyasını seçin
+- Otomatik validation yapılır
+- Başarılı import sonrası tüm elementler yüklenir
+
+### 7️⃣ Responsive Design
+- Element'i seçin
+- Properties Panel'de "Responsive" bölümünü açın
+- "+ Enable" butonuna tıklayın
+- Mobile ve Tablet için özel width/height ayarlayın
+- Toolbar'dan viewport değiştirerek test edin (🖥️ Desktop / 📱 Tablet / 📱 Mobile)
 
 ## ⌨️ Klavye Kısayolları
 
