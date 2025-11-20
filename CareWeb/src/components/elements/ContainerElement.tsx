@@ -1,4 +1,4 @@
-import { ContainerElement as ContainerElementType } from '../../types';
+import type { ContainerElement as ContainerElementType } from '../../types';
 
 interface ContainerElementProps {
   element: ContainerElementType;

@@ -1,4 +1,4 @@
-import { TextContentElement as TextContentElementType } from '../../types';
+import type { TextContentElement as TextContentElementType } from '../../types';
 
 interface TextContentElementProps {
   element: TextContentElementType;

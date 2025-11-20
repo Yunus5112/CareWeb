@@ -1,4 +1,4 @@
-import { FooterElement as FooterElementType } from '../../types';
+import type { FooterElement as FooterElementType } from '../../types';
 
 interface FooterElementProps {
   element: FooterElementType;

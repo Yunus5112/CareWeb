@@ -1,21 +1,25 @@
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
-import {
+import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
+import type {
   Element,
-  ElementType,
   CanvasState,
   SelectionState,
   DragState,
   HistoryState,
   ProjectState,
-  ViewportMode,
-  VIEWPORT_SIZES
+  Result,
+  AppError,
 } from '../types';
 import {
-  generateElementId,
-  generateHistoryId,
-  DEFAULT_POSITIONS,
-  ELEMENT_TEMPLATES
-} from '../utils';
+  ElementType,
+  ViewportMode,
+  VIEWPORT_SIZES,
+  createImportError,
+  createParseError,
+  fromUnknownError,
+} from '../types';
+import { validateProjectJSON } from '../utils';
+import { ElementFactory } from '../services/ElementFactory';
+import { Ok, Err } from '../types/result';
 
 // Builder State Interface
 interface BuilderState {
@@ -294,8 +298,8 @@ interface BuilderContextType {
   selectElement: (id: string, multiSelect?: boolean) => void;
   deselectAll: () => void;
   setViewportMode: (mode: ViewportMode) => void;
-  exportJSON: () => string;
-  importJSON: (json: string) => void;
+  exportJSON: () => Result<string, AppError>;
+  importJSON: (json: string) => Result<void, AppError>;
 }
 
 const BuilderContext = createContext<BuilderContextType | undefined>(undefined);
@@ -305,33 +309,8 @@ export const BuilderProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [state, dispatch] = useReducer(builderReducer, initialState);
 
   const addElement = useCallback((type: ElementType, position?: { x: number; y: number }) => {
-    const template = ELEMENT_TEMPLATES.find(t => t.type === type);
-    if (!template) return;
-
-    // Header ve Footer her zaman sabit pozisyonlardan başlar
-    let newPosition;
-    if (type === ElementType.HEADER) {
-      // Header her zaman x:0, y:0 dan başlar
-      newPosition = { ...template.defaultPosition, x: 0, y: 0 };
-    } else if (type === ElementType.FOOTER) {
-      // Footer her zaman x:0, altta başlar
-      newPosition = { ...template.defaultPosition, x: 0 };
-    } else {
-      // Diğer elementler sürüklendiği pozisyondan başlar
-      newPosition = position
-        ? { ...template.defaultPosition, x: position.x, y: position.y }
-        : template.defaultPosition;
-    }
-
-    const newElement: any = {
-      id: generateElementId(type),
-      type,
-      content: template.defaultContent,
-      position: newPosition,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
+    // ✅ Type-safe element creation using ElementFactory
+    const newElement = ElementFactory.createElement(type, position);
     dispatch({ type: 'ADD_ELEMENT', payload: newElement });
   }, []);
 
@@ -355,30 +334,62 @@ export const BuilderProvider: React.FC<{ children: ReactNode }> = ({ children })
     dispatch({ type: 'SET_VIEWPORT_MODE', payload: mode });
   }, []);
 
-  const exportJSON = useCallback(() => {
-    const projectData = {
-      project: state.project.metadata,
-      canvas: state.canvas.config,
-      elements: state.elements,
-      metadata: {
-        totalElements: state.elements.length,
-        exportFormat: 'json',
-        exportVersion: '2.0'
-      }
-    };
-    return JSON.stringify(projectData, null, 2);
+  const exportJSON = useCallback((): Result<string, AppError> => {
+    try {
+      const projectData = {
+        project: state.project.metadata,
+        canvas: state.canvas.config,
+        elements: state.elements,
+        metadata: {
+          totalElements: state.elements.length,
+          exportFormat: 'json',
+          exportVersion: '2.0'
+        }
+      };
+      
+      const jsonString = JSON.stringify(projectData, null, 2);
+      return Ok(jsonString);
+    } catch (error) {
+      return Err(fromUnknownError(error));
+    }
   }, [state]);
 
-  const importJSON = useCallback((json: string) => {
+  const importJSON = useCallback((json: string): Result<void, AppError> => {
     try {
-      const data = JSON.parse(json);
-      // TODO: Add validation
+      // Step 1: Parse JSON
+      let data: any;
+      try {
+        data = JSON.parse(json);
+      } catch (parseError) {
+        return Err(createParseError('Invalid JSON format. Please check your file.'));
+      }
+      
+      // Step 2: Validate structure
+      const validation = validateProjectJSON(data);
+      if (!validation.valid) {
+        return Err(createImportError(
+          'JSON validation failed',
+          validation.errors
+        ));
+      }
+      
+      // Step 3: Import data
       dispatch({ type: 'SET_ELEMENTS', payload: data.elements || [] });
+      
       if (data.project) {
         dispatch({ type: 'UPDATE_PROJECT_METADATA', payload: data.project });
       }
+      
+      if (data.canvas) {
+        // Update canvas config if provided
+        dispatch({ type: 'SET_VIEWPORT_MODE', payload: ViewportMode.DESKTOP });
+      }
+      
+      dispatch({ type: 'MARK_SAVED' });
+      
+      return Ok(undefined);
     } catch (error) {
-      console.error('Failed to import JSON:', error);
+      return Err(fromUnknownError(error));
     }
   }, []);
 

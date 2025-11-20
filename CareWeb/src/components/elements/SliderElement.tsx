@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SliderElement as SliderElementType } from '../../types';
+import type { SliderElement as SliderElementType } from '../../types';
 
 interface SliderElementProps {
   element: SliderElementType;

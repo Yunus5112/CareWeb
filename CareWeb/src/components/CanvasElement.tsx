@@ -1,7 +1,19 @@
-import { useEffect, useRef, useMemo } from 'react';
+/**
+ * CanvasElement Component
+ * Refactored: Now uses custom hooks for drag and resize
+ * Cleaner, more maintainable, follows SRP
+ */
+
+import { useRef, useMemo } from 'react';
 import { useBuilder } from '../store/BuilderContext';
-import { Element, ElementType, ResizeHandle } from '../types';
+import type { Element } from '../types';
+import { ElementType } from '../types';
 import { getResponsivePosition } from '../utils';
+import { useDraggable } from '../hooks/element/useDraggable';
+import { useResizable } from '../hooks/element/useResizable';
+import { useIsElementSelected } from '../hooks/builder/useBuilderSelector';
+
+// Element components
 import HeaderElement from './elements/HeaderElement';
 import FooterElement from './elements/FooterElement';
 import CardElement from './elements/CardElement';
@@ -13,14 +25,18 @@ interface CanvasElementProps {
   element: Element;
 }
 
+/**
+ * CanvasElement - Now much cleaner!
+ * Complexity reduced from 380+ lines to ~150 lines
+ */
 const CanvasElement = ({ element }: CanvasElementProps) => {
-  const { state, selectElement, updateElement } = useBuilder();
-  const isSelected = state.selection.selectedElementIds.includes(element.id);
+  const { state, selectElement } = useBuilder();
   const elementRef = useRef<HTMLDivElement>(null);
-  const isResizingRef = useRef(false);
-  const activeHandleRef = useRef<string | null>(null);
-
-  // Get responsive position based on current viewport
+  
+  // Use selector hook for better performance
+  const isSelected = useIsElementSelected(element.id);
+  
+  // Calculate responsive position
   const effectivePosition = useMemo(() => {
     return getResponsivePosition(
       element.position,
@@ -28,267 +44,28 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
       state.canvas.viewportMode
     );
   }, [element.position, element.responsive, state.canvas.viewportMode]);
-
+  
+  // Use custom hooks for drag and resize
+  useDraggable({
+    element,
+    isSelected,
+    elementRef: elementRef as React.RefObject<HTMLDivElement>,
+  });
+  
+  const { isResizing } = useResizable({
+    element,
+    isSelected,
+    elementRef: elementRef as React.RefObject<HTMLDivElement>,
+  });
+  
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     selectElement(element.id, e.metaKey || e.ctrlKey);
   };
-
-  // Drag and Resize implementation
-  useEffect(() => {
-    if (!isSelected || !elementRef.current) return;
-
-    let isDragging = false;
-    let isResizing = false;
-    let startX = 0;
-    let startY = 0;
-    let initialX = typeof element.position.x === 'number' ? element.position.x : 0;
-    let initialY = typeof element.position.y === 'number' ? element.position.y : 0;
-    let initialWidth = typeof element.position.width === 'number' ? element.position.width : 0;
-    let initialHeight = typeof element.position.height === 'number' ? element.position.height : 0;
-    let activeHandle: string | null = null;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      
-      // Resize handle'a tıklandıysa
-      if (target.classList.contains('resize-handle')) {
-        isResizing = true;
-        activeHandle = target.dataset.handle || null;
-        activeHandleRef.current = activeHandle;
-        isResizingRef.current = true;
-        
-        startX = e.clientX;
-        startY = e.clientY;
-        initialX = typeof element.position.x === 'number' ? element.position.x : 0;
-        initialY = typeof element.position.y === 'number' ? element.position.y : 0;
-        initialWidth = typeof element.position.width === 'number' ? element.position.width : 0;
-        initialHeight = typeof element.position.height === 'number' ? element.position.height : 0;
-        
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      
-      // Normal drag
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      initialX = typeof element.position.x === 'number' ? element.position.x : 0;
-      initialY = typeof element.position.y === 'number' ? element.position.y : 0;
-      e.preventDefault();
-      e.stopPropagation();
-      
-      document.body.style.cursor = 'grabbing';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing && activeHandle) {
-        const deltaX = (e.clientX - startX) / state.canvas.zoom;
-        const deltaY = (e.clientY - startY) / state.canvas.zoom;
-        
-        let newX = initialX;
-        let newY = initialY;
-        let newWidth = initialWidth;
-        let newHeight = initialHeight;
-        
-        // Aspect ratio hesapla
-        const aspectRatio = initialWidth / initialHeight;
-        const maintainAspectRatio = e.shiftKey; // Shift tuşu basılıysa oranı koru
-        
-        // Handle farklı yönlere göre resize işlemi
-        switch (activeHandle) {
-          case 'tl': // Top-left
-            newX = initialX + deltaX;
-            newY = initialY + deltaY;
-            newWidth = initialWidth - deltaX;
-            newHeight = initialHeight - deltaY;
-            
-            if (maintainAspectRatio) {
-              // En büyük değişimi baz al
-              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-              const sign = deltaX < 0 ? -1 : 1;
-              newWidth = initialWidth - sign * maxDelta;
-              newHeight = newWidth / aspectRatio;
-              newX = initialX + (initialWidth - newWidth);
-              newY = initialY + (initialHeight - newHeight);
-            }
-            break;
-          case 'tc': // Top-center
-            newY = initialY + deltaY;
-            newHeight = initialHeight - deltaY;
-            if (maintainAspectRatio) {
-              newWidth = newHeight * aspectRatio;
-              newX = initialX - (newWidth - initialWidth) / 2;
-            }
-            break;
-          case 'tr': // Top-right
-            newY = initialY + deltaY;
-            newWidth = initialWidth + deltaX;
-            newHeight = initialHeight - deltaY;
-            
-            if (maintainAspectRatio) {
-              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-              const sign = deltaX > 0 ? 1 : -1;
-              newWidth = initialWidth + sign * maxDelta;
-              newHeight = newWidth / aspectRatio;
-              newY = initialY + (initialHeight - newHeight);
-            }
-            break;
-          case 'ml': // Middle-left
-            newX = initialX + deltaX;
-            newWidth = initialWidth - deltaX;
-            if (maintainAspectRatio) {
-              newHeight = newWidth / aspectRatio;
-              newY = initialY - (newHeight - initialHeight) / 2;
-            }
-            break;
-          case 'mr': // Middle-right
-            newWidth = initialWidth + deltaX;
-            if (maintainAspectRatio) {
-              newHeight = newWidth / aspectRatio;
-              newY = initialY - (newHeight - initialHeight) / 2;
-            }
-            break;
-          case 'bl': // Bottom-left
-            newX = initialX + deltaX;
-            newWidth = initialWidth - deltaX;
-            newHeight = initialHeight + deltaY;
-            
-            if (maintainAspectRatio) {
-              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-              const sign = deltaX < 0 ? -1 : 1;
-              newWidth = initialWidth - sign * maxDelta;
-              newHeight = newWidth / aspectRatio;
-              newX = initialX + (initialWidth - newWidth);
-            }
-            break;
-          case 'bc': // Bottom-center
-            newHeight = initialHeight + deltaY;
-            if (maintainAspectRatio) {
-              newWidth = newHeight * aspectRatio;
-              newX = initialX - (newWidth - initialWidth) / 2;
-            }
-            break;
-          case 'br': // Bottom-right
-            newWidth = initialWidth + deltaX;
-            newHeight = initialHeight + deltaY;
-            
-            if (maintainAspectRatio) {
-              // En büyük değişimi baz al
-              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-              const sign = deltaX > 0 ? 1 : -1;
-              newWidth = initialWidth + sign * maxDelta;
-              newHeight = newWidth / aspectRatio;
-            }
-            break;
-        }
-        
-        // Minimum boyut kontrolü
-        newWidth = Math.max(50, newWidth);
-        newHeight = Math.max(50, newHeight);
-        
-        // Grid snap if enabled
-        if (state.canvas.config.grid.snap) {
-          const gridSize = state.canvas.config.grid.size;
-          newX = Math.round(newX / gridSize) * gridSize;
-          newY = Math.round(newY / gridSize) * gridSize;
-          newWidth = Math.round(newWidth / gridSize) * gridSize;
-          newHeight = Math.round(newHeight / gridSize) * gridSize;
-        }
-        
-        // Geçici style güncelle
-        if (elementRef.current) {
-          elementRef.current.style.left = `${newX}px`;
-          elementRef.current.style.top = `${newY}px`;
-          elementRef.current.style.width = `${newWidth}px`;
-          elementRef.current.style.height = `${newHeight}px`;
-        }
-        return;
-      }
-      
-      if (isDragging) {
-        const deltaX = (e.clientX - startX) / state.canvas.zoom;
-        const deltaY = (e.clientY - startY) / state.canvas.zoom;
-        
-        let newX = initialX + deltaX;
-        let newY = initialY + deltaY;
-        
-        // Grid snap if enabled
-        if (state.canvas.config.grid.snap) {
-          const gridSize = state.canvas.config.grid.size;
-          newX = Math.round(newX / gridSize) * gridSize;
-          newY = Math.round(newY / gridSize) * gridSize;
-        }
-        
-        if (elementRef.current) {
-          elementRef.current.style.left = `${newX}px`;
-          elementRef.current.style.top = `${newY}px`;
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isResizing && elementRef.current) {
-        const finalX = parseFloat(elementRef.current.style.left);
-        const finalY = parseFloat(elementRef.current.style.top);
-        const finalWidth = parseFloat(elementRef.current.style.width);
-        const finalHeight = parseFloat(elementRef.current.style.height);
-        
-        updateElement(element.id, {
-          position: {
-            ...element.position,
-            x: finalX,
-            y: finalY,
-            width: finalWidth,
-            height: finalHeight
-          }
-        });
-        
-        isResizing = false;
-        activeHandle = null;
-        activeHandleRef.current = null;
-        isResizingRef.current = false;
-        return;
-      }
-      
-      if (isDragging && elementRef.current) {
-        const finalX = parseFloat(elementRef.current.style.left);
-        const finalY = parseFloat(elementRef.current.style.top);
-        
-        // Sınırlar içinde tut
-        const maxX = state.canvas.config.width - (typeof element.position.width === 'number' ? element.position.width : 0);
-        const maxY = state.canvas.config.height - (typeof element.position.height === 'number' ? element.position.height : 0);
-        
-        const constrainedX = Math.max(0, Math.min(finalX, maxX));
-        const constrainedY = Math.max(0, Math.min(finalY, maxY));
-        
-        updateElement(element.id, {
-          position: {
-            ...element.position,
-            x: constrainedX,
-            y: constrainedY
-          }
-        });
-      }
-      
-      isDragging = false;
-      document.body.style.cursor = '';
-    };
-
-    const element_div = elementRef.current;
-    element_div.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      element_div?.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-    };
-  }, [isSelected, element.id, element.position, state.canvas.zoom, state.canvas.config, updateElement]);
-
+  
+  /**
+   * Render element based on type
+   */
   const renderElement = () => {
     switch (element.type) {
       case ElementType.HEADER:
@@ -307,7 +84,62 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
         return <div className="p-4">Unknown Element</div>;
     }
   };
-
+  
+  /**
+   * Render resize handles
+   */
+  const renderResizeHandles = () => {
+    if (!isSelected) return null;
+    
+    const handleClassName = "resize-handle absolute w-3 h-3 bg-blue-500 rounded-full z-10 hover:scale-150 transition-transform";
+    
+    return (
+      <>
+        {/* Corner Handles */}
+        <div 
+          data-handle="tl" 
+          className={`${handleClassName} -top-1 -left-1 cursor-nwse-resize`}
+        />
+        <div 
+          data-handle="tr" 
+          className={`${handleClassName} -top-1 -right-1 cursor-nesw-resize`}
+        />
+        <div 
+          data-handle="bl" 
+          className={`${handleClassName} -bottom-1 -left-1 cursor-nesw-resize`}
+        />
+        <div 
+          data-handle="br" 
+          className={`${handleClassName} -bottom-1 -right-1 cursor-nwse-resize`}
+        />
+        
+        {/* Edge Handles */}
+        <div 
+          data-handle="tc" 
+          className={`${handleClassName} -top-1 left-1/2 -translate-x-1/2 cursor-ns-resize`}
+        />
+        <div 
+          data-handle="bc" 
+          className={`${handleClassName} -bottom-1 left-1/2 -translate-x-1/2 cursor-ns-resize`}
+        />
+        <div 
+          data-handle="ml" 
+          className={`${handleClassName} top-1/2 -left-1 -translate-y-1/2 cursor-ew-resize`}
+        />
+        <div 
+          data-handle="mr" 
+          className={`${handleClassName} top-1/2 -right-1 -translate-y-1/2 cursor-ew-resize`}
+        />
+        
+        {/* Element Info Badge */}
+        <div className="absolute -top-8 left-0 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
+          {element.type} • {element.id.split('_').pop()}
+          {isResizing && <span className="ml-2 opacity-75">• Hold Shift for aspect ratio</span>}
+        </div>
+      </>
+    );
+  };
+  
   return (
     <div
       ref={elementRef}
@@ -326,56 +158,9 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
       }}
     >
       {renderElement()}
-      
-      {/* Selection Handles */}
-      {isSelected && (
-        <>
-          {/* Corner Handles - for resizing */}
-          <div 
-            data-handle="tl" 
-            className="resize-handle absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nwse-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="tr" 
-            className="resize-handle absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-nesw-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="bl" 
-            className="resize-handle absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full cursor-nesw-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="br" 
-            className="resize-handle absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full cursor-nwse-resize z-10 hover:scale-150 transition-transform" 
-          />
-          
-          {/* Edge Handles */}
-          <div 
-            data-handle="tc" 
-            className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-ns-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="bc" 
-            className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-ns-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="ml" 
-            className="resize-handle absolute top-1/2 -left-1 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-ew-resize z-10 hover:scale-150 transition-transform" 
-          />
-          <div 
-            data-handle="mr" 
-            className="resize-handle absolute top-1/2 -right-1 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-ew-resize z-10 hover:scale-150 transition-transform" 
-          />
-          
-          {/* Element Info Badge */}
-          <div className="absolute -top-8 left-0 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
-            {element.type} • {element.id.split('_').pop()}
-            {isResizingRef.current && <span className="ml-2 opacity-75">• Hold Shift for aspect ratio</span>}
-          </div>
-        </>
-      )}
+      {renderResizeHandles()}
     </div>
   );
 };
 
 export default CanvasElement;
-

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useBuilder } from '../store/BuilderContext';
-import { ElementType, ViewportMode } from '../types';
+import { ElementType } from '../types';
 import { generateDefaultResponsiveConfig } from '../utils';
+import { useSelectedElement, useCanvasConfig } from '../hooks/builder/useBuilderSelector';
+import { UI_MESSAGES } from '../constants';
 
 const PropertiesPanel = () => {
-  const { state, updateElement, removeElement } = useBuilder();
+  const { updateElement, removeElement } = useBuilder();
   const [showResponsive, setShowResponsive] = useState(false);
   
-  const selectedElement = state.selection.selectedElementIds.length === 1
-    ? state.elements.find(el => el.id === state.selection.selectedElementIds[0])
-    : null;
+  // Use selector hook for better performance
+  const selectedElement = useSelectedElement();
+  const canvasConfig = useCanvasConfig();
 
   if (!selectedElement) {
     return (
@@ -42,7 +44,7 @@ const PropertiesPanel = () => {
   };
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this element?')) {
+    if (confirm(UI_MESSAGES.CONFIRM_DELETE)) {
       removeElement(selectedElement.id);
     }
   };
@@ -292,7 +294,7 @@ const PropertiesPanel = () => {
             <div className="space-y-4 pl-2 border-l-2 border-gray-700">
               {/* Current Viewport Indicator */}
               <div className="text-xs text-gray-400 mb-2">
-                Current: <span className="text-blue-400">{state.canvas.viewportMode}</span>
+                Current: <span className="text-blue-400">{canvasConfig.viewportMode}</span>
               </div>
 
               {/* Mobile Settings */}

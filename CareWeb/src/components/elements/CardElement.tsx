@@ -1,4 +1,4 @@
-import { CardElement as CardElementType } from '../../types';
+import type { CardElement as CardElementType } from '../../types';
 
 interface CardElementProps {
   element: CardElementType;

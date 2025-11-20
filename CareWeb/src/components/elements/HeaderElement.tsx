@@ -1,4 +1,4 @@
-import { HeaderElement as HeaderElementType } from '../../types';
+import type { HeaderElement as HeaderElementType } from '../../types';
 
 interface HeaderElementProps {
   element: HeaderElementType;

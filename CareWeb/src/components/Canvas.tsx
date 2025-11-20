@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useBuilder } from '../store/BuilderContext';
 import { ElementType } from '../types';
-import { detectCollisions, findNearestValidPosition } from '../utils';
+import { CollisionDetector } from '../services';
 import CanvasElement from './CanvasElement';
 
 const Canvas = () => {
@@ -35,10 +35,9 @@ const Canvas = () => {
         height: typeof el.position.height === 'number' ? el.position.height : 0
       }));
 
-      const collision = detectCollisions(
+      const collision = CollisionDetector.detectCollisions(
         { x: x - defaultWidth / 2, y: y - defaultHeight / 2, width: defaultWidth, height: defaultHeight },
-        existingElements,
-        5
+        existingElements
       );
       
       setHasCollision(collision.hasCollision);
@@ -68,8 +67,7 @@ const Canvas = () => {
       let x = e.clientX - rect.left;
       let y = e.clientY - rect.top;
 
-      // Element boyutlarını al (template'den)
-      const template = state.elements.length > 0 ? null : null; // Basitleştirilmiş
+      // Element boyutlarını al
       const defaultWidth = 300;
       const defaultHeight = 200;
       
@@ -83,21 +81,19 @@ const Canvas = () => {
       }));
 
       // Çakışma kontrolü
-      const collision = detectCollisions(
+      const collision = CollisionDetector.detectCollisions(
         { x, y, width: defaultWidth, height: defaultHeight },
-        existingElements,
-        10 // 10px threshold
+        existingElements
       );
 
       // Eğer çakışma varsa, en yakın boş pozisyonu bul
       if (collision.hasCollision) {
-        const validPosition = findNearestValidPosition(
+        const validPosition = CollisionDetector.findNearestValidPosition(
           { x, y },
           { width: defaultWidth, height: defaultHeight },
           existingElements,
           state.canvas.config.width,
-          state.canvas.config.height,
-          50 // 50px search radius
+          state.canvas.config.height
         );
         x = validPosition.x;
         y = validPosition.y;

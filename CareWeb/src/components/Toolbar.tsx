@@ -1,21 +1,30 @@
 import { useRef } from 'react';
 import { useBuilder } from '../store/BuilderContext';
-import { ViewportMode } from '../types';
-import { validateProjectJSON } from '../utils';
+import { ViewportMode, isOk, formatErrorMessage } from '../types';
+import { UI_MESSAGES } from '../constants';
 
 const Toolbar = () => {
   const { state, setViewportMode, exportJSON, importJSON } = useBuilder();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
-    const json = exportJSON();
-    const blob = new Blob([json], { type: 'application/json' });
+    const result = exportJSON();
+    
+    if (!isOk(result)) {
+      alert(`${UI_MESSAGES.EXPORT_FAILED}\n\n${formatErrorMessage(result.error)}`);
+      return;
+    }
+    
+    const blob = new Blob([result.data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${state.project.metadata.name.toLowerCase().replace(/\s+/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    // Optional: Show success message
+    console.log(UI_MESSAGES.PROJECT_SAVED);
   };
 
   const handleImport = () => {
@@ -28,24 +37,17 @@ const Toolbar = () => {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      try {
-        const json = event.target?.result as string;
-        const data = JSON.parse(json);
-        
-        // Validate JSON
-        const validation = validateProjectJSON(data);
-        if (!validation.valid) {
-          alert(`Import failed:\n${validation.errors.join('\n')}`);
-          return;
-        }
-
-        // Import
-        importJSON(json);
-        alert('Project imported successfully!');
-      } catch (error) {
-        alert('Failed to import: Invalid JSON file');
-        console.error(error);
+      const json = event.target?.result as string;
+      
+      // Import with proper error handling
+      const result = importJSON(json);
+      
+      if (!isOk(result)) {
+        alert(`${UI_MESSAGES.IMPORT_FAILED}\n\n${formatErrorMessage(result.error)}`);
+        return;
       }
+      
+      alert(UI_MESSAGES.PROJECT_LOADED);
     };
     reader.readAsText(file);
     
