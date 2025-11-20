@@ -1,8 +1,11 @@
+import { useRef } from 'react';
 import { useBuilder } from '../store/BuilderContext';
 import { ViewportMode } from '../types';
+import { validateProjectJSON } from '../utils';
 
 const Toolbar = () => {
-  const { state, setViewportMode, exportJSON } = useBuilder();
+  const { state, setViewportMode, exportJSON, importJSON } = useBuilder();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
     const json = exportJSON();
@@ -13,6 +16,41 @@ const Toolbar = () => {
     a.download = `${state.project.metadata.name.toLowerCase().replace(/\s+/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = event.target?.result as string;
+        const data = JSON.parse(json);
+        
+        // Validate JSON
+        const validation = validateProjectJSON(data);
+        if (!validation.valid) {
+          alert(`Import failed:\n${validation.errors.join('\n')}`);
+          return;
+        }
+
+        // Import
+        importJSON(json);
+        alert('Project imported successfully!');
+      } catch (error) {
+        alert('Failed to import: Invalid JSON file');
+        console.error(error);
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    e.target.value = '';
   };
 
   return (
@@ -70,6 +108,21 @@ const Toolbar = () => {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        
+        <button
+          onClick={handleImport}
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          📥 Import JSON
+        </button>
+        
         <button
           onClick={handleExport}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"

@@ -6,10 +6,19 @@ import { useBuilder } from '../store/BuilderContext';
 const Sidebar = () => {
   const { dispatch } = useBuilder();
   const [activeTab, setActiveTab] = useState<'components' | 'pages'>('components');
+  const [draggingType, setDraggingType] = useState<ElementType | null>(null);
 
   const handleDragStart = (e: React.DragEvent, elementType: ElementType) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('elementType', elementType);
+    
+    // Sürüklenen elementi işaretle
+    setDraggingType(elementType);
+    
+    // Drag image'ı yarı şeffaf yap
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
     
     dispatch({
       type: 'START_DRAG',
@@ -20,7 +29,13 @@ const Sidebar = () => {
     });
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Opacity'yi geri al
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    
+    setDraggingType(null);
     dispatch({ type: 'END_DRAG' });
   };
 
@@ -72,7 +87,9 @@ const Sidebar = () => {
                   draggable
                   onDragStart={(e) => handleDragStart(e, template.type)}
                   onDragEnd={handleDragEnd}
-                  className="bg-gray-700 hover:bg-gray-600 rounded-lg p-4 cursor-move transition-colors group"
+                  className={`bg-gray-700 hover:bg-gray-600 rounded-lg p-4 cursor-move transition-all group ${
+                    draggingType === template.type ? 'opacity-50 scale-95' : 'opacity-100'
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">

@@ -1,16 +1,18 @@
 import { useRef, useState } from 'react';
 import { useBuilder } from '../store/BuilderContext';
 import { ElementType } from '../types';
+import { detectCollisions, findNearestValidPosition } from '../utils';
 import CanvasElement from './CanvasElement';
 
 const Canvas = () => {
   const { state, addElement, dispatch, deselectAll } = useBuilder();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isOver, setIsOver] = useState(false);
+  const [hasCollision, setHasCollision] = useState(false);
+  const [previewPosition, setPreviewPosition] = useState<{ x: number; y: number } | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
     setIsOver(true);
 
     // Update drag preview position
@@ -18,6 +20,29 @@ const Canvas = () => {
       const rect = canvasRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+      
+      setPreviewPosition({ x, y });
+      
+      // Çakışma kontrolü (preview için)
+      const defaultWidth = 300;
+      const defaultHeight = 200;
+      
+      const existingElements = state.elements.map(el => ({
+        id: el.id,
+        x: typeof el.position.x === 'number' ? el.position.x : 0,
+        y: typeof el.position.y === 'number' ? el.position.y : 0,
+        width: typeof el.position.width === 'number' ? el.position.width : 0,
+        height: typeof el.position.height === 'number' ? el.position.height : 0
+      }));
+
+      const collision = detectCollisions(
+        { x: x - defaultWidth / 2, y: y - defaultHeight / 2, width: defaultWidth, height: defaultHeight },
+        existingElements,
+        5
+      );
+      
+      setHasCollision(collision.hasCollision);
+      e.dataTransfer.dropEffect = collision.hasCollision ? 'move' : 'copy';
       
       dispatch({
         type: 'UPDATE_DRAG_POSITION',
@@ -28,6 +53,8 @@ const Canvas = () => {
 
   const handleDragLeave = () => {
     setIsOver(false);
+    setHasCollision(false);
+    setPreviewPosition(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -38,8 +65,43 @@ const Canvas = () => {
     
     if (elementType && canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+
+      // Element boyutlarını al (template'den)
+      const template = state.elements.length > 0 ? null : null; // Basitleştirilmiş
+      const defaultWidth = 300;
+      const defaultHeight = 200;
+      
+      // Mevcut elementlerle çakışma kontrolü
+      const existingElements = state.elements.map(el => ({
+        id: el.id,
+        x: typeof el.position.x === 'number' ? el.position.x : 0,
+        y: typeof el.position.y === 'number' ? el.position.y : 0,
+        width: typeof el.position.width === 'number' ? el.position.width : 0,
+        height: typeof el.position.height === 'number' ? el.position.height : 0
+      }));
+
+      // Çakışma kontrolü
+      const collision = detectCollisions(
+        { x, y, width: defaultWidth, height: defaultHeight },
+        existingElements,
+        10 // 10px threshold
+      );
+
+      // Eğer çakışma varsa, en yakın boş pozisyonu bul
+      if (collision.hasCollision) {
+        const validPosition = findNearestValidPosition(
+          { x, y },
+          { width: defaultWidth, height: defaultHeight },
+          existingElements,
+          state.canvas.config.width,
+          state.canvas.config.height,
+          50 // 50px search radius
+        );
+        x = validPosition.x;
+        y = validPosition.y;
+      }
 
       addElement(elementType, { x, y });
     }
@@ -87,24 +149,32 @@ const Canvas = () => {
 
           {/* Drop Zone Indicator */}
           {isOver && (
-            <div className="absolute inset-0 bg-blue-500 bg-opacity-5 pointer-events-none flex items-center justify-center">
-              <div className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
-                Drop element here
+            <div className={`absolute inset-0 ${hasCollision ? 'bg-orange-500' : 'bg-blue-500'} bg-opacity-5 pointer-events-none flex items-center justify-center`}>
+              <div className={`${hasCollision ? 'bg-orange-600' : 'bg-blue-600'} text-white px-6 py-3 rounded-lg shadow-lg`}>
+                {hasCollision ? '⚠️ Will auto-adjust position' : '✓ Drop element here'}
               </div>
             </div>
           )}
 
           {/* Drag Preview */}
-          {state.drag.isDragging && state.drag.dragPreviewPosition && (
+          {state.drag.isDragging && previewPosition && (
             <div
-              className="absolute pointer-events-none border-2 border-dashed border-blue-500 bg-blue-100 bg-opacity-20 rounded"
+              className={`absolute pointer-events-none border-2 border-dashed rounded transition-colors ${
+                hasCollision 
+                  ? 'border-orange-500 bg-orange-100 bg-opacity-20' 
+                  : 'border-blue-500 bg-blue-100 bg-opacity-20'
+              }`}
               style={{
-                left: state.drag.dragPreviewPosition.x - 50,
-                top: state.drag.dragPreviewPosition.y - 50,
-                width: 100,
-                height: 100
+                left: previewPosition.x - 150,
+                top: previewPosition.y - 100,
+                width: 300,
+                height: 200
               }}
-            />
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-gray-600 font-semibold">
+                {state.drag.draggedElementType}
+              </div>
+            </div>
           )}
 
           {/* Rendered Elements */}

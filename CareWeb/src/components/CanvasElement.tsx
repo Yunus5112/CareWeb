@@ -82,6 +82,10 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
         let newWidth = initialWidth;
         let newHeight = initialHeight;
         
+        // Aspect ratio hesapla
+        const aspectRatio = initialWidth / initialHeight;
+        const maintainAspectRatio = e.shiftKey; // Shift tuşu basılıysa oranı koru
+        
         // Handle farklı yönlere göre resize işlemi
         switch (activeHandle) {
           case 'tl': // Top-left
@@ -89,34 +93,84 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
             newY = initialY + deltaY;
             newWidth = initialWidth - deltaX;
             newHeight = initialHeight - deltaY;
+            
+            if (maintainAspectRatio) {
+              // En büyük değişimi baz al
+              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              const sign = deltaX < 0 ? -1 : 1;
+              newWidth = initialWidth - sign * maxDelta;
+              newHeight = newWidth / aspectRatio;
+              newX = initialX + (initialWidth - newWidth);
+              newY = initialY + (initialHeight - newHeight);
+            }
             break;
           case 'tc': // Top-center
             newY = initialY + deltaY;
             newHeight = initialHeight - deltaY;
+            if (maintainAspectRatio) {
+              newWidth = newHeight * aspectRatio;
+              newX = initialX - (newWidth - initialWidth) / 2;
+            }
             break;
           case 'tr': // Top-right
             newY = initialY + deltaY;
             newWidth = initialWidth + deltaX;
             newHeight = initialHeight - deltaY;
+            
+            if (maintainAspectRatio) {
+              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              const sign = deltaX > 0 ? 1 : -1;
+              newWidth = initialWidth + sign * maxDelta;
+              newHeight = newWidth / aspectRatio;
+              newY = initialY + (initialHeight - newHeight);
+            }
             break;
           case 'ml': // Middle-left
             newX = initialX + deltaX;
             newWidth = initialWidth - deltaX;
+            if (maintainAspectRatio) {
+              newHeight = newWidth / aspectRatio;
+              newY = initialY - (newHeight - initialHeight) / 2;
+            }
             break;
           case 'mr': // Middle-right
             newWidth = initialWidth + deltaX;
+            if (maintainAspectRatio) {
+              newHeight = newWidth / aspectRatio;
+              newY = initialY - (newHeight - initialHeight) / 2;
+            }
             break;
           case 'bl': // Bottom-left
             newX = initialX + deltaX;
             newWidth = initialWidth - deltaX;
             newHeight = initialHeight + deltaY;
+            
+            if (maintainAspectRatio) {
+              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              const sign = deltaX < 0 ? -1 : 1;
+              newWidth = initialWidth - sign * maxDelta;
+              newHeight = newWidth / aspectRatio;
+              newX = initialX + (initialWidth - newWidth);
+            }
             break;
           case 'bc': // Bottom-center
             newHeight = initialHeight + deltaY;
+            if (maintainAspectRatio) {
+              newWidth = newHeight * aspectRatio;
+              newX = initialX - (newWidth - initialWidth) / 2;
+            }
             break;
           case 'br': // Bottom-right
             newWidth = initialWidth + deltaX;
             newHeight = initialHeight + deltaY;
+            
+            if (maintainAspectRatio) {
+              // En büyük değişimi baz al
+              const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              const sign = deltaX > 0 ? 1 : -1;
+              newWidth = initialWidth + sign * maxDelta;
+              newHeight = newWidth / aspectRatio;
+            }
             break;
         }
         
@@ -305,6 +359,7 @@ const CanvasElement = ({ element }: CanvasElementProps) => {
           {/* Element Info Badge */}
           <div className="absolute -top-8 left-0 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none">
             {element.type} • {element.id.split('_').pop()}
+            {isResizingRef.current && <span className="ml-2 opacity-75">• Hold Shift for aspect ratio</span>}
           </div>
         </>
       )}
