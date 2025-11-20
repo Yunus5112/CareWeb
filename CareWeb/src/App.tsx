@@ -1,5 +1,7 @@
+import PageBuilder from './components/PageBuilder';
+
 const App = () => {
-  return <div className="p-4 text-3xl">Hello World</div>;
+  return <PageBuilder />;
 };
 
 export default App;
