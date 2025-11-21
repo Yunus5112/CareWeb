@@ -1,5 +1,7 @@
 # CareWeb - Test Builder & Drag & Drop Page Builder
 
+**🌐 Live Demo**: [https://yunus5112.github.io/CareWeb](https://yunus5112.github.io/CareWeb)
+
 A modern, responsive drag & drop page builder built with React, TypeScript, and Tailwind CSS.
 
 ## 🚀 Features
@@ -39,8 +41,6 @@ npm run build
 ## 🌐 Deployment
 
 This project is deployed on GitHub Pages. See [DEPLOYMENT.md](./DEPLOYMENT.md) for details.
-
-**Live Demo**: https://yunus5112.github.io/CareWeb/
 
 ## 📄 License
 
